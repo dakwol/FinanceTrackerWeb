@@ -1,0 +1,177 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  > button:last-child {
+    margin-left: auto;
+  }
+}
+
+.month {
+  display: flex;
+  min-width: 210px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.error,
+.notice {
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.error {
+  border: 1px solid #f5c2cb;
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.notice {
+  border: 1px solid #b7e4d4;
+  background: var(--color-positive-soft);
+  color: var(--color-positive);
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+
+  section {
+    display: grid;
+    gap: 7px;
+  }
+
+  span {
+    color: var(--color-text-muted);
+    font-size: 13px;
+  }
+
+  strong {
+    font-size: 24px;
+  }
+}
+
+.negative {
+  color: var(--color-danger);
+}
+
+.planCard {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.list {
+  display: grid;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: auto minmax(180px, 1fr) minmax(130px, auto) minmax(
+      140px,
+      0.7fr
+    ) auto;
+  align-items: center;
+  gap: 14px;
+  border-top: 1px solid var(--color-border);
+  padding: 15px 0;
+
+  &:first-child {
+    border-top: 0;
+  }
+}
+
+.categoryMark {
+  width: 10px;
+  height: 36px;
+  border-radius: 99px;
+}
+
+.category,
+.values {
+  display: grid;
+  gap: 4px;
+
+  span {
+    color: var(--color-text-muted);
+    font-size: 12px;
+  }
+}
+
+.values {
+  justify-items: end;
+}
+
+.progress {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: var(--color-surface-muted);
+
+  span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--color-accent);
+  }
+
+  .overBudget {
+    background: var(--color-danger);
+  }
+}
+
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  padding: 40px 20px;
+  color: var(--color-text-muted);
+  text-align: center;
+
+  p {
+    margin: 0;
+  }
+}
+
+@media (max-width: 880px) {
+  .row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .values {
+    justify-items: start;
+    grid-column: 2;
+  }
+
+  .progress {
+    grid-column: 2 / -1;
+  }
+
+  .row > button {
+    grid-column: 3;
+    grid-row: 1 / 3;
+  }
+}
+
+@media (max-width: 620px) {
+  .toolbar {
+    flex-wrap: wrap;
+
+    > button:last-child {
+      width: 100%;
+      margin-left: 0;
+    }
+  }
+
+  .month {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .summary {
+    grid-template-columns: 1fr;
+  }
+}
+

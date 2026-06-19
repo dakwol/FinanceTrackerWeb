@@ -1,0 +1,52 @@
+:root {
+  --color-background: #f5f7fb;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f0f3f8;
+  --color-border: #e4e8f0;
+  --color-text: #172033;
+  --color-text-muted: #6f788b;
+  --color-accent: #7057e8;
+  --color-accent-strong: #5940ce;
+  --color-accent-soft: #eeeafd;
+  --color-positive: #168765;
+  --color-positive-soft: #dcf5eb;
+  --color-danger: #d84b62;
+  --color-danger-soft: #fde7eb;
+  --color-warning: #b87808;
+  --color-warning-soft: #fff1cf;
+  --shadow-card: 0 8px 30px rgb(25 35 60 / 5%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  background: var(--color-background);
+}
+
+body {
+  min-height: 100dvh;
+  margin: 0;
+  background: var(--color-background);
+  color: var(--color-text);
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+::selection {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-strong);
+}
+

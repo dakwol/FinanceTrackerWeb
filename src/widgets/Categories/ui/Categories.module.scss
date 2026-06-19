@@ -1,0 +1,131 @@
+.error {
+  border: 1px solid #f5c2cb;
+  border-radius: 12px;
+  background: var(--color-danger-soft);
+  padding: 12px 14px;
+  color: var(--color-danger);
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.category {
+  display: grid;
+  gap: 18px;
+}
+
+.inactive {
+  opacity: 0.62;
+}
+
+.heading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+
+  h2 {
+    overflow: hidden;
+    margin: 0;
+    font-size: 17px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  p {
+    margin: 4px 0 0;
+    color: var(--color-text-muted);
+    font-size: 12px;
+  }
+}
+
+.icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 13px;
+  font-weight: 800;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+
+  span {
+    border-radius: 99px;
+    background: var(--color-surface-muted);
+    padding: 5px 9px;
+    color: var(--color-text-muted);
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .income {
+    background: var(--color-positive-soft);
+    color: var(--color-positive);
+  }
+
+  .expense {
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
+  }
+
+  .saving {
+    background: var(--color-warning-soft);
+    color: var(--color-warning);
+  }
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  border-top: 1px solid var(--color-border);
+  padding-top: 12px;
+
+  button {
+    min-height: 38px;
+    padding: 8px;
+    font-size: 12px;
+  }
+}
+
+.empty {
+  grid-column: 1 / -1;
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  padding: 40px 20px;
+  color: var(--color-text-muted);
+  text-align: center;
+
+  p {
+    margin: 0;
+  }
+}
+
+@media (max-width: 1050px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .filters,
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+

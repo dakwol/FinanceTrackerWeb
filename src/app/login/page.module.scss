@@ -1,0 +1,40 @@
+.page {
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  background:
+    radial-gradient(circle at 15% 20%, #e7e0ff 0, transparent 34%),
+    radial-gradient(circle at 85% 80%, #dff4eb 0, transparent 30%),
+    var(--color-background);
+  padding: 20px;
+}
+
+.card {
+  width: min(100%, 440px);
+  padding: clamp(24px, 6vw, 42px);
+
+  h1 {
+    margin: 14px 0 12px;
+    font-size: clamp(30px, 7vw, 44px);
+    letter-spacing: -0.055em;
+  }
+
+  p {
+    margin: 0 0 24px;
+    color: var(--color-text-muted);
+    line-height: 1.6;
+  }
+
+  a {
+    text-decoration: none;
+  }
+}
+
+.badge {
+  color: var(--color-accent-strong);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
