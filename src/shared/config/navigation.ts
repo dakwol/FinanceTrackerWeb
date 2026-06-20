@@ -3,6 +3,7 @@ import {
   FolderKanban,
   ListChecks,
   MessageCircle,
+  PiggyBank,
   Settings,
   WalletCards,
 } from "lucide-react";
@@ -27,6 +28,11 @@ export const navigationItems = [
     label: "Категории",
     href: "/categories",
     icon: FolderKanban,
+  },
+  {
+    label: "Накопления",
+    href: "/savings",
+    icon: PiggyBank,
   },
   {
     label: "Чат",

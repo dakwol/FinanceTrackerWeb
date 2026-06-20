@@ -1,10 +1,20 @@
 "use client";
 
-import { Bell, BellOff, Send } from "lucide-react";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  Bell,
+  BellOff,
+  Repeat2,
+  Send,
+} from "lucide-react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 import type { ChatMessage } from "@/entities/message/model/types";
 import { useFinanceWorkspace } from "@/features/finance-workspace";
+import { formatMoney } from "@/shared/lib/money";
+import { getOwnerLabel } from "@/shared/lib/owners";
+import { OperationTypeEnum } from "@/shared/model/finance";
 import { Button, ButtonVariantEnum } from "@/shared/ui/Button";
 import { Card } from "@/shared/ui/Card";
 import { PageLayout } from "@/shared/ui/PageLayout";
@@ -20,9 +30,44 @@ import styles from "./FamilyChat.module.scss";
 
 const chatRefreshIntervalMs = 8_000;
 
+type ChatFeedItem =
+  | {
+      kind: "message";
+      id: string;
+      createdAt: string;
+      message: ChatMessage;
+    }
+  | {
+      kind: "operation";
+      id: string;
+      createdAt: string;
+      title: string;
+      description: string;
+      amount: number;
+      type: OperationTypeEnum;
+      author: string;
+    }
+  | {
+      kind: "transfer";
+      id: string;
+      createdAt: string;
+      title: string;
+      description: string;
+      amount: number;
+      author: string;
+    };
+
 export function FamilyChat() {
-  const { currentUser, spreadsheetId, isLoading, signIn } =
-    useFinanceWorkspace();
+  const {
+    currentUser,
+    spreadsheetId,
+    categories,
+    users,
+    operations,
+    transfers,
+    isLoading,
+    signIn,
+  } = useFinanceWorkspace();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
@@ -32,6 +77,62 @@ export function FamilyChat() {
     "unsupported" | "default" | "enabled" | "denied"
   >("default");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const feedItems = useMemo<ChatFeedItem[]>(() => {
+    const messageItems: ChatFeedItem[] = messages.map((message) => ({
+      kind: "message",
+      id: `message-${message.id}`,
+      createdAt: message.createdAt,
+      message,
+    }));
+    const operationItems: ChatFeedItem[] = operations.map((operation) => {
+      const category = categories.find(
+        (currentCategory) => currentCategory.id === operation.categoryId,
+      );
+      const user = users.find(
+        (currentUser) =>
+          currentUser.email.toLowerCase() ===
+          operation.createdByEmail.toLowerCase(),
+      );
+
+      return {
+        kind: "operation",
+        id: `operation-${operation.id}`,
+        createdAt: `${operation.createdAt}T12:00:00`,
+        title: getOperationTitle(operation.type),
+        description: [
+          category?.name ?? "Без категории",
+          getOwnerLabel(operation.owner, users),
+          operation.comment,
+        ]
+          .filter(Boolean)
+          .join(" · "),
+        amount: operation.amount,
+        type: operation.type,
+        author: user?.name || user?.email || operation.createdByEmail,
+      };
+    });
+    const transferItems: ChatFeedItem[] = transfers.map((transfer) => {
+      const user = users.find(
+        (currentUser) =>
+          currentUser.email.toLowerCase() ===
+          transfer.createdByEmail.toLowerCase(),
+      );
+
+      return {
+        kind: "transfer",
+        id: `transfer-${transfer.id}`,
+        createdAt: `${transfer.createdAt}T12:00:00`,
+        title: "Перевод между владельцами",
+        description: `${getOwnerLabel(transfer.fromOwner, users)} → ${getOwnerLabel(transfer.toOwner, users)}${transfer.comment ? ` · ${transfer.comment}` : ""}`,
+        amount: transfer.amount,
+        author: user?.name || user?.email || transfer.createdByEmail,
+      };
+    });
+
+    return [...messageItems, ...operationItems, ...transferItems].sort(
+      (first, second) => first.createdAt.localeCompare(second.createdAt),
+    );
+  }, [categories, messages, operations, transfers, users]);
 
   useEffect(() => {
     if (!spreadsheetId || !currentUser) {
@@ -86,7 +187,7 @@ export function FamilyChat() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [feedItems]);
 
   useEffect(() => {
     if (
@@ -246,15 +347,44 @@ export function FamilyChat() {
 
       <Card className={styles.chat}>
         <div className={styles.messages} aria-live="polite">
-          {isChatLoading && messages.length === 0 && (
+          {isChatLoading && feedItems.length === 0 && (
             <p className={styles.empty}>Загружаем сообщения…</p>
           )}
-          {!isChatLoading && messages.length === 0 && (
+          {!isChatLoading && feedItems.length === 0 && (
             <p className={styles.empty}>
               Сообщений пока нет. Начните разговор.
             </p>
           )}
-          {messages.map((message) => {
+          {feedItems.map((item) => {
+            if (item.kind !== "message") {
+              const Icon =
+                item.kind === "transfer"
+                  ? Repeat2
+                  : item.type === OperationTypeEnum.Expense
+                    ? ArrowUpRight
+                    : ArrowDownLeft;
+
+              return (
+                <article className={styles.event} key={item.id}>
+                  <span className={styles.eventIcon}>
+                    <Icon size={18} />
+                  </span>
+                  <div>
+                    <strong>{item.title}</strong>
+                    <p>{item.description}</p>
+                    <small>{item.author}</small>
+                  </div>
+                  <div className={styles.eventAmount}>
+                    <strong>{formatMoney(item.amount)}</strong>
+                    <time dateTime={item.createdAt}>
+                      {formatMessageTime(item.createdAt)}
+                    </time>
+                  </div>
+                </article>
+              );
+            }
+
+            const message = item.message;
             const isOwn =
               message.senderEmail.toLowerCase() ===
               currentUser.email.toLowerCase();
@@ -262,7 +392,7 @@ export function FamilyChat() {
             return (
               <article
                 className={`${styles.message} ${isOwn ? styles.own : ""}`}
-                key={message.id}
+                key={item.id}
               >
                 {!isOwn && <strong>{message.senderName}</strong>}
                 <p>{message.text}</p>
@@ -315,6 +445,18 @@ function getPushButtonLabel(
   }
 
   return "Включить уведомления";
+}
+
+function getOperationTitle(type: OperationTypeEnum): string {
+  if (type === OperationTypeEnum.Income) {
+    return "Добавлен доход";
+  }
+
+  if (type === OperationTypeEnum.Saving) {
+    return "Добавлено накопление";
+  }
+
+  return "Добавлен расход";
 }
 
 function formatMessageTime(value: string): string {

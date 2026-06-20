@@ -12,8 +12,10 @@ import {
 import type { ReactNode } from "react";
 
 import type { Category } from "@/entities/category/model/types";
+import type { SavingsAccount } from "@/entities/account/model/types";
 import type { Operation } from "@/entities/operation/model/types";
 import type { Plan } from "@/entities/plan/model/types";
+import type { SavingsGoal } from "@/entities/savings-goal/model/types";
 import type { Transfer } from "@/entities/transfer/model/types";
 import type { WorkspaceUser } from "@/entities/user/model/types";
 import {
@@ -53,6 +55,8 @@ interface FinanceWorkspaceContextValue {
   plans: Plan[];
   operations: Operation[];
   transfers: Transfer[];
+  accounts: SavingsAccount[];
+  savingsGoals: SavingsGoal[];
   isAuthReady: boolean;
   isLoading: boolean;
   errorMessage: string | null;
@@ -66,6 +70,10 @@ interface FinanceWorkspaceContextValue {
   addPlans: (plans: Plan[]) => Promise<void>;
   updatePlan: (plan: Plan) => Promise<void>;
   addTransfer: (transfer: Transfer) => Promise<void>;
+  addAccount: (account: SavingsAccount) => Promise<void>;
+  updateAccount: (account: SavingsAccount) => Promise<void>;
+  addSavingsGoal: (goal: SavingsGoal) => Promise<void>;
+  updateSavingsGoal: (goal: SavingsGoal) => Promise<void>;
   invitePartner: (email: string) => Promise<void>;
   connectSpreadsheet: (spreadsheetId: string) => Promise<void>;
   clearSpreadsheet: () => void;
@@ -97,6 +105,8 @@ export function FinanceWorkspaceProvider({
   const [plans, setPlans] = useState<Plan[]>([]);
   const [operations, setOperations] = useState<Operation[]>([]);
   const [transfers, setTransfers] = useState<Transfer[]>([]);
+  const [accounts, setAccounts] = useState<SavingsAccount[]>([]);
+  const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>([]);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -147,6 +157,8 @@ export function FinanceWorkspaceProvider({
         setPlans([]);
         setOperations([]);
         setTransfers([]);
+        setAccounts([]);
+        setSavingsGoals([]);
       }),
     [runWithLoading],
   );
@@ -393,6 +405,89 @@ export function FinanceWorkspaceProvider({
     [runWithLoading, spreadsheetId],
   );
 
+  const addAccount = useCallback(
+    (account: SavingsAccount) =>
+      runWithLoading(async () => {
+        if (!spreadsheetId) {
+          throw new GoogleApiError("Сначала подключите Google Spreadsheet.");
+        }
+
+        await appendSheetRow(
+          spreadsheetId,
+          SheetNameEnum.Accounts,
+          accountToSheetRow(account),
+        );
+        const rows = await readSheetRows(spreadsheetId, SheetNameEnum.Accounts);
+        setAccounts(mapAccountRows(rows));
+      }),
+    [runWithLoading, spreadsheetId],
+  );
+
+  const updateAccount = useCallback(
+    (account: SavingsAccount) =>
+      runWithLoading(async () => {
+        if (!spreadsheetId || !account.rowNumber) {
+          throw new GoogleApiError("Не удалось определить счёт в Google Sheets.");
+        }
+
+        await updateSheetRow({
+          spreadsheetId,
+          sheetName: SheetNameEnum.Accounts,
+          rowNumber: account.rowNumber,
+          values: accountToSheetRow(account),
+        });
+        setAccounts((currentAccounts) =>
+          currentAccounts.map((currentAccount) =>
+            currentAccount.id === account.id ? account : currentAccount,
+          ),
+        );
+      }),
+    [runWithLoading, spreadsheetId],
+  );
+
+  const addSavingsGoal = useCallback(
+    (goal: SavingsGoal) =>
+      runWithLoading(async () => {
+        if (!spreadsheetId) {
+          throw new GoogleApiError("Сначала подключите Google Spreadsheet.");
+        }
+
+        await appendSheetRow(
+          spreadsheetId,
+          SheetNameEnum.SavingsGoals,
+          savingsGoalToSheetRow(goal),
+        );
+        const rows = await readSheetRows(
+          spreadsheetId,
+          SheetNameEnum.SavingsGoals,
+        );
+        setSavingsGoals(mapSavingsGoalRows(rows));
+      }),
+    [runWithLoading, spreadsheetId],
+  );
+
+  const updateSavingsGoal = useCallback(
+    (goal: SavingsGoal) =>
+      runWithLoading(async () => {
+        if (!spreadsheetId || !goal.rowNumber) {
+          throw new GoogleApiError("Не удалось определить цель в Google Sheets.");
+        }
+
+        await updateSheetRow({
+          spreadsheetId,
+          sheetName: SheetNameEnum.SavingsGoals,
+          rowNumber: goal.rowNumber,
+          values: savingsGoalToSheetRow(goal),
+        });
+        setSavingsGoals((currentGoals) =>
+          currentGoals.map((currentGoal) =>
+            currentGoal.id === goal.id ? goal : currentGoal,
+          ),
+        );
+      }),
+    [runWithLoading, spreadsheetId],
+  );
+
   const refreshWorkspaceData = useCallback(
     () =>
       runWithLoading(async () => {
@@ -402,6 +497,8 @@ export function FinanceWorkspaceProvider({
           setPlans([]);
           setOperations([]);
           setTransfers([]);
+          setAccounts([]);
+          setSavingsGoals([]);
           return;
         }
 
@@ -420,6 +517,8 @@ export function FinanceWorkspaceProvider({
           planRows,
           operationRows,
           transferRows,
+          accountRows,
+          savingsGoalRows,
         ] =
           await Promise.all([
           getSpreadsheetMetadata(spreadsheetId),
@@ -428,6 +527,8 @@ export function FinanceWorkspaceProvider({
           readSheetRows(spreadsheetId, SheetNameEnum.Plans),
           readSheetRows(spreadsheetId, SheetNameEnum.Operations),
           readSheetRows(spreadsheetId, SheetNameEnum.Transfers),
+          readSheetRows(spreadsheetId, SheetNameEnum.Accounts),
+          readSheetRows(spreadsheetId, SheetNameEnum.SavingsGoals),
         ]);
 
         setSpreadsheet(spreadsheetMetadata);
@@ -436,6 +537,8 @@ export function FinanceWorkspaceProvider({
         setPlans(mapPlanRows(planRows));
         setOperations(mapOperationRows(operationRows));
         setTransfers(mapTransferRows(transferRows));
+        setAccounts(mapAccountRows(accountRows));
+        setSavingsGoals(mapSavingsGoalRows(savingsGoalRows));
       }),
     [currentUser, runWithLoading, spreadsheetId],
   );
@@ -458,6 +561,8 @@ export function FinanceWorkspaceProvider({
     setPlans([]);
     setOperations([]);
     setTransfers([]);
+    setAccounts([]);
+    setSavingsGoals([]);
   }, []);
 
   const clearError = useCallback(() => {
@@ -474,6 +579,8 @@ export function FinanceWorkspaceProvider({
       plans,
       operations,
       transfers,
+      accounts,
+      savingsGoals,
       isAuthReady,
       isLoading,
       errorMessage,
@@ -487,6 +594,10 @@ export function FinanceWorkspaceProvider({
       addPlans,
       updatePlan,
       addTransfer,
+      addAccount,
+      updateAccount,
+      addSavingsGoal,
+      updateSavingsGoal,
       invitePartner,
       connectSpreadsheet,
       clearSpreadsheet,
@@ -502,6 +613,8 @@ export function FinanceWorkspaceProvider({
       plans,
       operations,
       transfers,
+      accounts,
+      savingsGoals,
       isAuthReady,
       isLoading,
       errorMessage,
@@ -515,6 +628,10 @@ export function FinanceWorkspaceProvider({
       addPlans,
       updatePlan,
       addTransfer,
+      addAccount,
+      updateAccount,
+      addSavingsGoal,
+      updateSavingsGoal,
       invitePartner,
       connectSpreadsheet,
       clearSpreadsheet,
@@ -688,6 +805,66 @@ function transferToSheetRow(transfer: Transfer): GoogleCellValue[] {
     transfer.comment,
     transfer.createdByEmail,
     transfer.createdAt,
+  ];
+}
+
+function mapAccountRows(rows: GoogleCellValue[][]): SavingsAccount[] {
+  return rows.slice(1).flatMap((row, index) => {
+    if (!row[0] || !row[1]) {
+      return [];
+    }
+
+    return [{
+      rowNumber: index + 2,
+      id: String(row[0]),
+      name: String(row[1]),
+      balance: Number(row[2] ?? 0),
+      color: String(row[3] ?? "#7057E8"),
+      createdAt: String(row[4]) as SavingsAccount["createdAt"],
+      updatedAt: String(row[5]) as SavingsAccount["updatedAt"],
+    }];
+  });
+}
+
+function accountToSheetRow(account: SavingsAccount): GoogleCellValue[] {
+  return [
+    account.id,
+    account.name,
+    account.balance,
+    account.color,
+    account.createdAt,
+    account.updatedAt,
+  ];
+}
+
+function mapSavingsGoalRows(rows: GoogleCellValue[][]): SavingsGoal[] {
+  return rows.slice(1).flatMap((row, index) => {
+    if (!row[0] || !row[1]) {
+      return [];
+    }
+
+    return [{
+      rowNumber: index + 2,
+      id: String(row[0]),
+      name: String(row[1]),
+      targetAmount: Number(row[2] ?? 0),
+      currentAmount: Number(row[3] ?? 0),
+      color: String(row[4] ?? "#7057E8"),
+      createdAt: String(row[5]) as SavingsGoal["createdAt"],
+      updatedAt: String(row[6]) as SavingsGoal["updatedAt"],
+    }];
+  });
+}
+
+function savingsGoalToSheetRow(goal: SavingsGoal): GoogleCellValue[] {
+  return [
+    goal.id,
+    goal.name,
+    goal.targetAmount,
+    goal.currentAmount,
+    goal.color,
+    goal.createdAt,
+    goal.updatedAt,
   ];
 }
 

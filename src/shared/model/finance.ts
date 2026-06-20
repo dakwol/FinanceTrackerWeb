@@ -28,6 +28,8 @@ export enum SheetNameEnum {
   Summary = "Summary",
   Messages = "Messages",
   PushSubscriptions = "PushSubscriptions",
+  Accounts = "Accounts",
+  SavingsGoals = "SavingsGoals",
 }
 
 export type IsoDate = `${number}-${number}-${number}`;

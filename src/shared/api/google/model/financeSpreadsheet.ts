@@ -76,6 +76,23 @@ export const financeSheetHeaders: Record<SheetNameEnum, string[]> = {
     "createdAt",
     "updatedAt",
   ],
+  [SheetNameEnum.Accounts]: [
+    "id",
+    "name",
+    "balance",
+    "color",
+    "createdAt",
+    "updatedAt",
+  ],
+  [SheetNameEnum.SavingsGoals]: [
+    "id",
+    "name",
+    "targetAmount",
+    "currentAmount",
+    "color",
+    "createdAt",
+    "updatedAt",
+  ],
 };
 
 export function createInitialSpreadsheetRows(
@@ -109,6 +126,10 @@ export function createInitialSpreadsheetRows(
     [SheetNameEnum.Messages]: [financeSheetHeaders[SheetNameEnum.Messages]],
     [SheetNameEnum.PushSubscriptions]: [
       financeSheetHeaders[SheetNameEnum.PushSubscriptions],
+    ],
+    [SheetNameEnum.Accounts]: [financeSheetHeaders[SheetNameEnum.Accounts]],
+    [SheetNameEnum.SavingsGoals]: [
+      financeSheetHeaders[SheetNameEnum.SavingsGoals],
     ],
   };
 }
