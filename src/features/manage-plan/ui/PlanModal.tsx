@@ -2,14 +2,18 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 
 import type { Category } from "@/entities/category/model/types";
 import type { Plan } from "@/entities/plan/model/types";
 import type { WorkspaceUser } from "@/entities/user/model/types";
 import { getCurrentIsoDate } from "@/shared/lib/date";
 import { parseMoneyToKopecks } from "@/shared/lib/money";
-import { commonOwnerId, MonthId } from "@/shared/model/finance";
+import {
+  commonOwnerId,
+  MonthId,
+  unlimitedPlanAmount,
+} from "@/shared/model/finance";
 import { createOwnerOptions } from "@/shared/lib/owners";
 import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
@@ -45,11 +49,13 @@ export function PlanModal({
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm<PlanFormValues>({
     resolver: zodResolver(planSchema),
     defaultValues: createDefaultValues(category, plan),
   });
+  const limitType = useWatch({ control, name: "limitType" });
 
   useEffect(() => {
     if (isOpen) {
@@ -68,7 +74,10 @@ export function PlanModal({
       id: plan?.id ?? crypto.randomUUID(),
       month,
       categoryId: category.id,
-      plannedAmount: parseMoneyToKopecks(values.plannedAmount),
+      plannedAmount:
+        values.limitType === "unlimited"
+          ? unlimitedPlanAmount
+          : parseMoneyToKopecks(values.plannedAmount),
       owner: values.owner,
       paymentDay: values.paymentDay === "" ? null : Number(values.paymentDay),
       createdAt: plan?.createdAt ?? currentDate,
@@ -86,11 +95,27 @@ export function PlanModal({
       onClose={onClose}
     >
       <form className={styles.form} onSubmit={submitForm}>
-        <MoneyInput
-          error={errors.plannedAmount?.message}
-          label="Плановая сумма"
-          {...register("plannedAmount")}
+        <Select
+          label="Ограничение"
+          options={[
+            { label: "Фиксированная сумма", value: "fixed" },
+            { label: "Безлимит", value: "unlimited" },
+          ]}
+          {...register("limitType")}
         />
+        {limitType === "fixed" && (
+          <MoneyInput
+            error={errors.plannedAmount?.message}
+            label="Плановая сумма"
+            {...register("plannedAmount")}
+          />
+        )}
+        {limitType === "unlimited" && (
+          <p className={styles.hint}>
+            Фактические расходы будут учитываться без ограничения и
+            перерасхода.
+          </p>
+        )}
         <Select
           error={errors.owner?.message}
           label="Владелец"
@@ -120,8 +145,12 @@ function createDefaultValues(
   plan: Plan | null,
 ): PlanFormValues {
   return {
+    limitType:
+      plan?.plannedAmount === unlimitedPlanAmount ? "unlimited" : "fixed",
     plannedAmount: plan
-      ? String(plan.plannedAmount / 100).replace(".", ",")
+      ? plan.plannedAmount === unlimitedPlanAmount
+        ? ""
+        : String(plan.plannedAmount / 100).replace(".", ",")
       : "",
     owner: plan?.owner ?? category?.owner ?? commonOwnerId,
     paymentDay: plan?.paymentDay ? String(plan.paymentDay) : "",

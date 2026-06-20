@@ -6,6 +6,7 @@ import {
   MonthId,
   OperationTypeEnum,
   OwnerId,
+  unlimitedPlanAmount,
 } from "@/shared/model/finance";
 
 export interface MonthSummary {
@@ -24,6 +25,7 @@ export interface CategoryProgress {
   actualAmount: number;
   remainingAmount: number;
   progressPercent: number;
+  isUnlimited: boolean;
 }
 
 export interface CalculateMonthSummaryParams {
@@ -101,17 +103,28 @@ export function calculateCategoryProgress(
   const plannedAmount = getPlansByMonth(plans, month)
     .filter((plan) => plan.categoryId === categoryId)
     .reduce((total, plan) => total + plan.plannedAmount, 0);
+  const isUnlimited = getPlansByMonth(plans, month).some(
+    (plan) =>
+      plan.categoryId === categoryId &&
+      plan.plannedAmount === unlimitedPlanAmount,
+  );
   const actualAmount = getOperationsByMonth(operations, month)
     .filter((operation) => operation.categoryId === categoryId)
     .reduce((total, operation) => total + operation.amount, 0);
+  const normalizedPlannedAmount = isUnlimited ? 0 : plannedAmount;
   const progressPercent =
-    plannedAmount > 0 ? Math.round((actualAmount / plannedAmount) * 100) : 0;
+    normalizedPlannedAmount > 0
+      ? Math.round((actualAmount / normalizedPlannedAmount) * 100)
+      : 0;
 
   return {
-    plannedAmount,
+    plannedAmount: normalizedPlannedAmount,
     actualAmount,
-    remainingAmount: plannedAmount - actualAmount,
+    remainingAmount: isUnlimited
+      ? 0
+      : normalizedPlannedAmount - actualAmount,
     progressPercent,
+    isUnlimited,
   };
 }
 
@@ -156,5 +169,6 @@ function sumPlans(
 ): number {
   return plans
     .filter((plan) => categoryTypeById.get(plan.categoryId) === type)
+    .filter((plan) => plan.plannedAmount !== unlimitedPlanAmount)
     .reduce((total, plan) => total + plan.plannedAmount, 0);
 }

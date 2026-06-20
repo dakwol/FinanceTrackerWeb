@@ -18,6 +18,7 @@ import { getOwnerLabel } from "@/shared/lib/owners";
 import {
   CategoryTypeEnum,
   MonthId,
+  unlimitedPlanAmount,
 } from "@/shared/model/finance";
 import { Button, ButtonVariantEnum } from "@/shared/ui/Button";
 import { Card } from "@/shared/ui/Card";
@@ -71,7 +72,9 @@ export function MonthPlan() {
   );
   const currentPlans = plans.filter((plan) => plan.month === selectedMonth);
   const totalPlanned = currentPlans.reduce(
-    (total, plan) => total + plan.plannedAmount,
+    (total, plan) =>
+      total +
+      (plan.plannedAmount === unlimitedPlanAmount ? 0 : plan.plannedAmount),
     0,
   );
   const totalActual = operations
@@ -80,6 +83,19 @@ export function MonthPlan() {
       planCategories.some((category) => category.id === operation.categoryId),
     )
     .reduce((total, operation) => total + operation.amount, 0);
+  const unlimitedCategoryIds = new Set(
+    currentPlans
+      .filter((plan) => plan.plannedAmount === unlimitedPlanAmount)
+      .map((plan) => plan.categoryId),
+  );
+  const limitedActual = operations
+    .filter((operation) => operation.month === selectedMonth)
+    .filter((operation) => !unlimitedCategoryIds.has(operation.categoryId))
+    .filter((operation) =>
+      planCategories.some((category) => category.id === operation.categoryId),
+    )
+    .reduce((total, operation) => total + operation.amount, 0);
+  const remainingPlanned = totalPlanned - limitedActual;
 
   const openPlanModal = (category: Category, plan: Plan | null) => {
     clearError();
@@ -215,8 +231,8 @@ export function MonthPlan() {
         </Card>
         <Card>
           <span>Остаток</span>
-          <strong className={totalPlanned - totalActual < 0 ? styles.negative : ""}>
-            {formatMoney(totalPlanned - totalActual)}
+          <strong className={remainingPlanned < 0 ? styles.negative : ""}>
+            {formatMoney(remainingPlanned)}
           </strong>
         </Card>
       </section>
@@ -259,17 +275,27 @@ export function MonthPlan() {
                   </div>
                   <div className={styles.values}>
                     <strong>{formatMoney(progress.actualAmount)}</strong>
-                    <span>из {formatMoney(progress.plannedAmount)}</span>
+                    <span>
+                      {progress.isUnlimited
+                        ? "безлимит"
+                        : `из ${formatMoney(progress.plannedAmount)}`}
+                    </span>
                   </div>
-                  <div className={styles.progress}>
-                    <span
-                      className={
-                        progress.progressPercent > 100
-                          ? styles.overBudget
-                          : undefined
-                      }
-                      style={{ width: `${visibleProgress}%` }}
-                    />
+                  <div
+                    className={`${styles.progress} ${
+                      progress.isUnlimited ? styles.unlimited : ""
+                    }`}
+                  >
+                    {!progress.isUnlimited && (
+                      <span
+                        className={
+                          progress.progressPercent > 100
+                            ? styles.overBudget
+                            : undefined
+                        }
+                        style={{ width: `${visibleProgress}%` }}
+                      />
+                    )}
                   </div>
                   <Button
                     variant={plan ? ButtonVariantEnum.Ghost : ButtonVariantEnum.Secondary}

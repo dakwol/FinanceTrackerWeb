@@ -122,6 +122,16 @@
   }
 }
 
+.progress.unlimited {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--color-accent-soft),
+    var(--color-accent-soft) 7px,
+    var(--color-surface-muted) 7px,
+    var(--color-surface-muted) 14px
+  );
+}
+
 .empty {
   display: grid;
   justify-items: center;

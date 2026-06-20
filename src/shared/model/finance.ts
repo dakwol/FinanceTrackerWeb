@@ -11,6 +11,7 @@ export enum CategoryTypeEnum {
 }
 
 export const commonOwnerId = "common";
+export const unlimitedPlanAmount = -1;
 export type OwnerId = string;
 
 export enum UserRoleEnum {

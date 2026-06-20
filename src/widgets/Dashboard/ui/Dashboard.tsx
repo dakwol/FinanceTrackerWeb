@@ -251,6 +251,7 @@ export function Dashboard({ month }: DashboardProps) {
                   key={category.id}
                   plannedAmount={progress.plannedAmount}
                   progressPercent={progress.progressPercent}
+                  isUnlimited={progress.isUnlimited}
                 />
               );
             })}
@@ -391,6 +392,7 @@ interface CategoryProgressRowProps {
   actualAmount: number;
   plannedAmount: number;
   progressPercent: number;
+  isUnlimited: boolean;
 }
 
 function CategoryProgressRow({
@@ -398,6 +400,7 @@ function CategoryProgressRow({
   actualAmount,
   plannedAmount,
   progressPercent,
+  isUnlimited,
 }: CategoryProgressRowProps) {
   const visibleProgress = Math.min(progressPercent, 100);
 
@@ -409,14 +412,21 @@ function CategoryProgressRow({
           <strong>{category.name}</strong>
         </div>
         <span>
-          {formatMoney(actualAmount)} / {formatMoney(plannedAmount)}
+          {formatMoney(actualAmount)} /{" "}
+          {isUnlimited ? "безлимит" : formatMoney(plannedAmount)}
         </span>
       </div>
-      <div className={styles.progressTrack}>
-        <span
-          className={progressPercent > 100 ? styles.overBudget : undefined}
-          style={{ width: `${visibleProgress}%` }}
-        />
+      <div
+        className={`${styles.progressTrack} ${
+          isUnlimited ? styles.unlimited : ""
+        }`}
+      >
+        {!isUnlimited && (
+          <span
+            className={progressPercent > 100 ? styles.overBudget : undefined}
+            style={{ width: `${visibleProgress}%` }}
+          />
+        )}
       </div>
     </div>
   );
