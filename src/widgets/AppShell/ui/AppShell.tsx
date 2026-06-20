@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import clsx from "clsx";
-import { Landmark, LogIn, LogOut, X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { Landmark, LogIn, LogOut, MoreHorizontal, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 import { useFinanceWorkspace } from "@/features/finance-workspace";
 import { navigationItems } from "@/shared/config/navigation";
@@ -15,6 +15,13 @@ import styles from "./AppShell.module.scss";
 interface AppShellProps {
   children: ReactNode;
 }
+
+const primaryMobileHrefs = new Set([
+  "/dashboard",
+  "/operations",
+  "/savings",
+  "/chat",
+]);
 
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
@@ -32,6 +39,16 @@ export function AppShell({ children }: AppShellProps) {
     clearError,
   } = useFinanceWorkspace();
   const loadedWorkspaceKey = useRef<string | null>(null);
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const primaryMobileItems = navigationItems.filter((item) =>
+    primaryMobileHrefs.has(item.href),
+  );
+  const secondaryMobileItems = navigationItems.filter(
+    (item) => !primaryMobileHrefs.has(item.href),
+  );
+  const isSecondaryRouteActive = secondaryMobileItems.some(
+    (item) => item.href === pathname,
+  );
 
   useEffect(() => {
     if (!currentUser || !spreadsheetId) {
@@ -143,8 +160,47 @@ export function AppShell({ children }: AppShellProps) {
         </div>
       </aside>
       <main className={styles.content}>{isAuthReady ? children : null}</main>
+      {isMoreMenuOpen && (
+        <>
+          <button
+            aria-label="Закрыть дополнительное меню"
+            className={styles.mobileMenuBackdrop}
+            type="button"
+            onClick={() => setIsMoreMenuOpen(false)}
+          />
+          <nav
+            aria-label="Дополнительная навигация"
+            className={styles.mobileMoreMenu}
+          >
+            <span className={styles.mobileMoreTitle}>Другие разделы</span>
+            <div className={styles.mobileMoreGrid}>
+              {secondaryMobileItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.href;
+
+                return (
+                  <Link
+                    className={clsx(
+                      styles.mobileMoreItem,
+                      isActive && styles.active,
+                    )}
+                    href={item.href}
+                    key={item.href}
+                    onClick={() => setIsMoreMenuOpen(false)}
+                  >
+                    <span>
+                      <Icon size={20} />
+                    </span>
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </nav>
+        </>
+      )}
       <nav className={styles.mobileNavigation}>
-        {navigationItems.map((item) => {
+        {primaryMobileItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
 
@@ -159,6 +215,24 @@ export function AppShell({ children }: AppShellProps) {
             </Link>
           );
         })}
+        <button
+          aria-expanded={isMoreMenuOpen}
+          aria-label={
+            isMoreMenuOpen
+              ? "Закрыть дополнительные разделы"
+              : "Открыть дополнительные разделы"
+          }
+          className={clsx(
+            styles.mobileItem,
+            styles.mobileMoreButton,
+            (isMoreMenuOpen || isSecondaryRouteActive) && styles.active,
+          )}
+          type="button"
+          onClick={() => setIsMoreMenuOpen((isOpen) => !isOpen)}
+        >
+          <MoreHorizontal size={20} />
+          <span>Ещё</span>
+        </button>
       </nav>
     </div>
   );
