@@ -4,6 +4,8 @@ import {
   ArrowDownLeft,
   ArrowRightLeft,
   ArrowUpRight,
+  ChevronLeft,
+  ChevronRight,
   PiggyBank,
   Plus,
   RefreshCw,
@@ -21,7 +23,7 @@ import {
   calculateCategoryProgress,
   calculateMonthSummary,
 } from "@/shared/lib/calculations";
-import { formatMonth } from "@/shared/lib/date";
+import { formatMonth, getAdjacentMonth } from "@/shared/lib/date";
 import { formatMoney } from "@/shared/lib/money";
 import {
   CategoryTypeEnum,
@@ -65,6 +67,7 @@ export function Dashboard({ month }: DashboardProps) {
     OperationTypeEnum.Expense,
   );
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(month);
 
   const openOperationModal = (type: OperationTypeEnum) => {
     clearError();
@@ -110,13 +113,14 @@ export function Dashboard({ month }: DashboardProps) {
     operations,
     plans,
     categories,
-    month,
+    month: selectedMonth,
   });
   const trackedCategories = categories.filter(
     (category) =>
       category.isActive && category.type !== CategoryTypeEnum.Income,
   );
   const recentOperations = [...operations]
+    .filter((operation) => operation.month === selectedMonth)
     .sort((firstOperation, secondOperation) =>
       secondOperation.date.localeCompare(firstOperation.date),
     )
@@ -127,7 +131,45 @@ export function Dashboard({ month }: DashboardProps) {
       <div className={styles.hero}>
         <div>
           <span className={styles.eyebrow}>Обзор бюджета</span>
-          <h1>{capitalize(formatMonth(month))}</h1>
+          <div className={styles.monthHeading}>
+            <button
+              aria-label="Предыдущий месяц"
+              type="button"
+              onClick={() =>
+                setSelectedMonth((currentMonth) =>
+                  getAdjacentMonth(currentMonth, -1),
+                )
+              }
+            >
+              <ChevronLeft size={21} />
+            </button>
+            <label>
+              <span title="Выбрать месяц">
+                {capitalize(formatMonth(selectedMonth))}
+              </span>
+              <input
+                aria-label="Выбрать месяц"
+                type="month"
+                value={selectedMonth}
+                onChange={(event) => {
+                  if (event.target.value) {
+                    setSelectedMonth(event.target.value as MonthId);
+                  }
+                }}
+              />
+            </label>
+            <button
+              aria-label="Следующий месяц"
+              type="button"
+              onClick={() =>
+                setSelectedMonth((currentMonth) =>
+                  getAdjacentMonth(currentMonth, 1),
+                )
+              }
+            >
+              <ChevronRight size={21} />
+            </button>
+          </div>
           <p>План и фактические операции вашей семьи в одном месте.</p>
         </div>
         <Button
@@ -199,7 +241,7 @@ export function Dashboard({ month }: DashboardProps) {
                 categoryId: category.id,
                 operations,
                 plans,
-                month,
+                month: selectedMonth,
               });
 
               return (

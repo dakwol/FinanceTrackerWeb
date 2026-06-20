@@ -44,15 +44,53 @@
   justify-content: space-between;
   gap: 20px;
 
-  h1 {
-    margin: 5px 0 6px;
-    font-size: clamp(30px, 5vw, 44px);
-    letter-spacing: -0.05em;
-  }
-
   p {
     margin: 0;
     color: var(--color-text-muted);
+  }
+}
+
+.monthHeading {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 5px 0 6px;
+
+  > button {
+    display: grid;
+    width: 36px;
+    height: 36px;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 1px solid var(--color-border);
+    border-radius: 11px;
+    background: var(--color-surface);
+    color: var(--color-text-muted);
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--color-accent);
+      color: var(--color-accent-strong);
+    }
+  }
+
+  label {
+    position: relative;
+    cursor: pointer;
+  }
+
+  label > span {
+    display: block;
+    font-size: clamp(30px, 5vw, 44px);
+    font-weight: 700;
+    letter-spacing: -0.05em;
+  }
+
+  input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
   }
 }
 
@@ -334,6 +372,15 @@
 
   .summaryGrid {
     gap: 10px;
+  }
+
+  .monthHeading {
+    justify-content: space-between;
+
+    label > span {
+      font-size: clamp(26px, 9vw, 36px);
+      text-align: center;
+    }
   }
 
   .summaryCard {
