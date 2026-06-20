@@ -9,12 +9,19 @@ import {
   UserRoundPlus,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { useFinanceWorkspace } from "@/features/finance-workspace";
 import { InvitePartnerForm } from "@/features/invite-partner";
+import {
+  listAvailableGoogleSpreadsheets,
+  validateSpreadsheetAccess,
+} from "@/shared/api/google";
+import type { GoogleDriveFile } from "@/shared/api/google";
 import { Button, ButtonVariantEnum } from "@/shared/ui/Button";
 import { Card } from "@/shared/ui/Card";
 import { PageLayout } from "@/shared/ui/PageLayout";
+import { Select } from "@/shared/ui/Select";
 
 import styles from "./Settings.module.scss";
 
@@ -30,10 +37,21 @@ export function Settings() {
     signIn,
     signOut,
     invitePartner,
+    connectSpreadsheet,
     clearSpreadsheet,
     refreshWorkspaceData,
     clearError,
   } = useFinanceWorkspace();
+  const [availableSpreadsheets, setAvailableSpreadsheets] = useState<
+    GoogleDriveFile[]
+  >([]);
+  const [selectedSpreadsheetId, setSelectedSpreadsheetId] = useState("");
+  const [isSpreadsheetPickerOpen, setIsSpreadsheetPickerOpen] =
+    useState(false);
+  const [isLoadingSpreadsheets, setIsLoadingSpreadsheets] = useState(false);
+  const [spreadsheetPickerError, setSpreadsheetPickerError] = useState<
+    string | null
+  >(null);
   const handleReconnect = async () => {
     clearError();
 
@@ -45,7 +63,46 @@ export function Settings() {
     }
   };
 
-  const handleChangeSpreadsheet = () => {
+  const handleChangeSpreadsheet = async () => {
+    clearError();
+    setSpreadsheetPickerError(null);
+    setIsSpreadsheetPickerOpen(true);
+    setIsLoadingSpreadsheets(true);
+
+    try {
+      const files = await listAvailableGoogleSpreadsheets();
+      const otherFiles = files.filter((file) => file.id !== spreadsheetId);
+
+      setAvailableSpreadsheets(otherFiles);
+      setSelectedSpreadsheetId(otherFiles[0]?.id ?? "");
+    } catch (error) {
+      setSpreadsheetPickerError(getErrorMessage(error));
+    } finally {
+      setIsLoadingSpreadsheets(false);
+    }
+  };
+
+  const handleSelectSpreadsheet = async () => {
+    if (!selectedSpreadsheetId) {
+      return;
+    }
+
+    clearError();
+    setSpreadsheetPickerError(null);
+    setIsLoadingSpreadsheets(true);
+
+    try {
+      await validateSpreadsheetAccess(selectedSpreadsheetId);
+      await connectSpreadsheet(selectedSpreadsheetId);
+      setIsSpreadsheetPickerOpen(false);
+    } catch (error) {
+      setSpreadsheetPickerError(getErrorMessage(error));
+    } finally {
+      setIsLoadingSpreadsheets(false);
+    }
+  };
+
+  const handleConnectAnotherSpreadsheet = () => {
     clearSpreadsheet();
     router.push("/onboarding");
   };
@@ -103,13 +160,70 @@ export function Settings() {
                   </Button>
                 </a>
                 <Button
+                  disabled={isLoadingSpreadsheets}
                   variant={ButtonVariantEnum.Ghost}
-                  onClick={handleChangeSpreadsheet}
+                  onClick={() => void handleChangeSpreadsheet()}
                 >
                   <Unplug size={17} />
                   Сменить таблицу
                 </Button>
               </div>
+              {isSpreadsheetPickerOpen && (
+                <div className={styles.spreadsheetPicker}>
+                  <Select
+                    disabled={
+                      isLoadingSpreadsheets ||
+                      availableSpreadsheets.length === 0
+                    }
+                    label="Доступные таблицы приложения"
+                    options={
+                      availableSpreadsheets.length > 0
+                        ? availableSpreadsheets.map((file) => ({
+                            label: file.ownedByMe
+                              ? `${file.name} — моя`
+                              : `${file.name} — общий доступ`,
+                            value: file.id,
+                          }))
+                        : [
+                            {
+                              label: isLoadingSpreadsheets
+                                ? "Загружаем таблицы..."
+                                : "Других таблиц не найдено",
+                              value: "",
+                            },
+                          ]
+                    }
+                    value={selectedSpreadsheetId}
+                    onChange={(event) =>
+                      setSelectedSpreadsheetId(event.target.value)
+                    }
+                  />
+                  {spreadsheetPickerError && (
+                    <p className={styles.pickerError} role="alert">
+                      {spreadsheetPickerError}
+                    </p>
+                  )}
+                  <div className={styles.actions}>
+                    <Button
+                      disabled={
+                        isLoadingSpreadsheets || !selectedSpreadsheetId
+                      }
+                      onClick={() => void handleSelectSpreadsheet()}
+                    >
+                      {isLoadingSpreadsheets
+                        ? "Проверяем..."
+                        : "Выбрать таблицу"}
+                    </Button>
+                    <Button
+                      disabled={isLoadingSpreadsheets}
+                      variant={ButtonVariantEnum.Ghost}
+                      onClick={handleConnectAnotherSpreadsheet}
+                    >
+                      Подключить по ссылке
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className={styles.empty}>
@@ -225,4 +339,12 @@ function Detail({ label, monospace = false, value }: DetailProps) {
       </strong>
     </div>
   );
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "Не удалось загрузить список таблиц.";
 }

@@ -1,11 +1,18 @@
 import { getGoogleAccessToken } from "./googleAuthApi";
 import { googleApiRequest } from "./lib/googleApiRequest";
 
-interface GoogleDriveFile {
+export interface GoogleDriveFile {
   id: string;
   name: string;
   mimeType: string;
   webViewLink?: string;
+  modifiedTime?: string;
+  ownedByMe?: boolean;
+}
+
+interface GoogleDriveFileList {
+  files?: GoogleDriveFile[];
+  nextPageToken?: string;
 }
 
 export async function createGoogleSpreadsheetFile(
@@ -42,4 +49,35 @@ export async function shareSpreadsheetWithEmail(
       }),
     },
   );
+}
+
+export async function listAvailableGoogleSpreadsheets(): Promise<
+  GoogleDriveFile[]
+> {
+  const files: GoogleDriveFile[] = [];
+  let pageToken: string | undefined;
+
+  do {
+    const searchParams = new URLSearchParams({
+      q: "mimeType = 'application/vnd.google-apps.spreadsheet' and trashed = false",
+      fields:
+        "nextPageToken,files(id,name,mimeType,webViewLink,modifiedTime,ownedByMe)",
+      orderBy: "modifiedTime desc",
+      pageSize: "100",
+    });
+
+    if (pageToken) {
+      searchParams.set("pageToken", pageToken);
+    }
+
+    const response = await googleApiRequest<GoogleDriveFileList>(
+      `https://www.googleapis.com/drive/v3/files?${searchParams.toString()}`,
+      getGoogleAccessToken(),
+    );
+
+    files.push(...(response.files ?? []));
+    pageToken = response.nextPageToken;
+  } while (pageToken);
+
+  return files;
 }

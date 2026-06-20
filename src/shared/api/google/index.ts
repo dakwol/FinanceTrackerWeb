@@ -8,8 +8,10 @@ export {
 } from "./googleAuthApi";
 export {
   createGoogleSpreadsheetFile,
+  listAvailableGoogleSpreadsheets,
   shareSpreadsheetWithEmail,
 } from "./googleDriveApi";
+export type { GoogleDriveFile } from "./googleDriveApi";
 export {
   appendSheetRow,
   createFinanceSpreadsheet,
