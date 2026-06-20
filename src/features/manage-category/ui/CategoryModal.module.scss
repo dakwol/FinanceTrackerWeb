@@ -9,19 +9,93 @@
   }
 }
 
-.colorField {
-  position: relative;
+.pickerField {
+  display: grid;
+  align-content: start;
+  gap: 8px;
 }
 
-.colorPreview {
-  position: absolute;
-  right: 12px;
-  bottom: 13px;
-  width: 22px;
-  height: 22px;
-  border: 2px solid #fff;
-  border-radius: 7px;
+.pickerLabel {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.colorPicker {
+  display: grid;
+  grid-template-columns: repeat(7, 32px);
+  gap: 8px;
+}
+
+.colorOption,
+.customColor {
+  width: 32px;
+  height: 32px;
+  border: 2px solid var(--color-surface);
+  border-radius: 10px;
   box-shadow: 0 0 0 1px var(--color-border);
+  cursor: pointer;
+}
+
+.colorOption[aria-pressed="true"] {
+  box-shadow:
+    0 0 0 2px var(--color-surface),
+    0 0 0 4px var(--color-text);
+}
+
+.customColor {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 45%);
+
+  input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+}
+
+.iconField {
+  grid-column: 1 / -1;
+}
+
+.iconPicker {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(36px, 1fr));
+  gap: 8px;
+}
+
+.iconOption {
+  display: grid;
+  min-height: 42px;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: 11px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--color-accent);
+    color: var(--color-text);
+  }
+
+  &[aria-pressed="true"] {
+    border-color: var(--color-accent);
+    background: var(--color-accent-soft);
+    color: var(--color-accent-strong);
+    box-shadow: 0 0 0 2px var(--color-accent-soft);
+  }
+}
+
+.fieldError {
+  color: var(--color-danger);
+  font-size: 13px;
 }
 
 @media (max-width: 560px) {
@@ -32,5 +106,16 @@
       grid-column: auto;
     }
   }
-}
 
+  .iconField {
+    grid-column: auto;
+  }
+
+  .colorPicker {
+    grid-template-columns: repeat(7, minmax(28px, 1fr));
+  }
+
+  .iconPicker {
+    grid-template-columns: repeat(5, minmax(40px, 1fr));
+  }
+}

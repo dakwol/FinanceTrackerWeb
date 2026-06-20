@@ -6,6 +6,10 @@ import { useForm, useWatch } from "react-hook-form";
 
 import type { Category } from "@/entities/category/model/types";
 import type { WorkspaceUser } from "@/entities/user/model/types";
+import {
+  categoryColorOptions,
+  categoryIconOptions,
+} from "@/shared/lib/categoryAppearance";
 import { getCurrentIsoDate } from "@/shared/lib/date";
 import {
   CategoryTypeEnum,
@@ -50,6 +54,7 @@ export function CategoryModal({
     register,
     handleSubmit,
     reset,
+    setValue,
     control,
     formState: { errors },
   } = useForm<CategoryFormValues>({
@@ -57,6 +62,7 @@ export function CategoryModal({
     defaultValues: createDefaultValues(category),
   });
   const selectedColor = useWatch({ control, name: "color" });
+  const selectedIcon = useWatch({ control, name: "icon" });
 
   useEffect(() => {
     if (isOpen) {
@@ -108,25 +114,80 @@ export function CategoryModal({
           options={createOwnerOptions(users, category?.owner)}
           {...register("owner")}
         />
-        <div className={styles.colorField}>
-          <Input
-            error={errors.color?.message}
-            label="Цвет"
-            placeholder="#7057E8"
-            {...register("color")}
-          />
-          <span
-            aria-hidden="true"
-            className={styles.colorPreview}
-            style={{ background: selectedColor }}
-          />
+        <div className={styles.pickerField}>
+          <span className={styles.pickerLabel}>Цвет</span>
+          <input type="hidden" {...register("color")} />
+          <div className={styles.colorPicker}>
+            {categoryColorOptions.map((color) => (
+              <button
+                aria-label={`Выбрать цвет ${color}`}
+                aria-pressed={selectedColor?.toUpperCase() === color}
+                className={styles.colorOption}
+                key={color}
+                style={{ backgroundColor: color }}
+                type="button"
+                onClick={() =>
+                  setValue("color", color, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }
+              />
+            ))}
+            <label
+              className={styles.customColor}
+              style={{ backgroundColor: selectedColor }}
+              title="Выбрать другой цвет"
+            >
+              <span aria-hidden="true">+</span>
+              <input
+                aria-label="Выбрать другой цвет"
+                type="color"
+                value={selectedColor}
+                onChange={(event) =>
+                  setValue("color", event.target.value.toUpperCase(), {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }
+              />
+            </label>
+          </div>
+          {errors.color?.message && (
+            <span className={styles.fieldError}>{errors.color.message}</span>
+          )}
         </div>
-        <Input
-          error={errors.icon?.message}
-          label="Иконка"
-          placeholder="Например, shopping-cart"
-          {...register("icon")}
-        />
+        <div className={`${styles.pickerField} ${styles.iconField}`}>
+          <span className={styles.pickerLabel}>Иконка</span>
+          <input type="hidden" {...register("icon")} />
+          <div className={styles.iconPicker}>
+            {categoryIconOptions.map((option) => {
+              const Icon = option.icon;
+
+              return (
+                <button
+                  aria-label={option.label}
+                  aria-pressed={selectedIcon === option.value}
+                  className={styles.iconOption}
+                  key={option.value}
+                  title={option.label}
+                  type="button"
+                  onClick={() =>
+                    setValue("icon", option.value, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    })
+                  }
+                >
+                  <Icon size={20} />
+                </button>
+              );
+            })}
+          </div>
+          {errors.icon?.message && (
+            <span className={styles.fieldError}>{errors.icon.message}</span>
+          )}
+        </div>
         <Button disabled={isLoading} fullWidth type="submit">
           {isLoading ? "Сохраняем..." : "Сохранить категорию"}
         </Button>

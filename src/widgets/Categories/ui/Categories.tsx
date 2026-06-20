@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import type { Category } from "@/entities/category/model/types";
 import { useFinanceWorkspace } from "@/features/finance-workspace";
 import { CategoryModal } from "@/features/manage-category";
+import { getCategoryIcon } from "@/shared/lib/categoryAppearance";
 import { getCurrentIsoDate } from "@/shared/lib/date";
 import { createOwnerOptions, getOwnerLabel } from "@/shared/lib/owners";
 import {
@@ -222,55 +223,62 @@ export function Categories() {
             <Button onClick={openCreateModal}>Создать категорию</Button>
           </Card>
         )}
-        {filteredCategories.map((category) => (
-          <Card
-            className={`${styles.category} ${
-              !category.isActive ? styles.inactive : ""
-            }`}
-            key={category.id}
-          >
-            <div className={styles.heading}>
-              <span
-                className={styles.icon}
-                style={{ background: `${category.color}1F`, color: category.color }}
-              >
-                {category.name.slice(0, 1).toUpperCase()}
-              </span>
-              <div>
-                <h2>{category.name}</h2>
-                <p>{category.icon}</p>
+        {filteredCategories.map((category) => {
+          const CategoryIcon = getCategoryIcon(category.icon);
+
+          return (
+            <Card
+              className={`${styles.category} ${
+                !category.isActive ? styles.inactive : ""
+              }`}
+              key={category.id}
+            >
+              <div className={styles.heading}>
+                <span
+                  className={styles.icon}
+                  style={{
+                    background: `${category.color}1F`,
+                    color: category.color,
+                  }}
+                >
+                  <CategoryIcon size={21} />
+                </span>
+                <div>
+                  <h2>{category.name}</h2>
+                  <p>{typeLabels[category.type]}</p>
+                </div>
               </div>
-            </div>
-            <div className={styles.tags}>
-              <span className={styles[category.type]}>
-                {typeLabels[category.type]}
-              </span>
-              <span>{getOwnerLabel(category.owner, users)}</span>
-              {!category.isActive && <span>Отключена</span>}
-            </div>
-            <div className={styles.actions}>
-              <Button
-                variant={ButtonVariantEnum.Ghost}
-                onClick={() => openEditModal(category)}
-              >
-                <Edit3 size={17} />
-                Изменить
-              </Button>
-              <Button
-                disabled={isLoading}
-                variant={ButtonVariantEnum.Ghost}
-                onClick={() => void toggleCategory(category)}
-              >
-                {category.isActive ? (
-                  <PowerOff size={17} />
-                ) : (
-                  <Power size={17} />
-                )}
-                {category.isActive ? "Отключить" : "Включить"}
-              </Button>
-            </div>
-          </Card>
-        ))}
+              <div className={styles.tags}>
+                <span className={styles[category.type]}>
+                  {typeLabels[category.type]}
+                </span>
+                <span>{getOwnerLabel(category.owner, users)}</span>
+                {!category.isActive && <span>Отключена</span>}
+              </div>
+              <div className={styles.actions}>
+                <Button
+                  variant={ButtonVariantEnum.Ghost}
+                  onClick={() => openEditModal(category)}
+                >
+                  <Edit3 size={17} />
+                  Изменить
+                </Button>
+                <Button
+                  disabled={isLoading}
+                  variant={ButtonVariantEnum.Ghost}
+                  onClick={() => void toggleCategory(category)}
+                >
+                  {category.isActive ? (
+                    <PowerOff size={17} />
+                  ) : (
+                    <Power size={17} />
+                  )}
+                  {category.isActive ? "Отключить" : "Включить"}
+                </Button>
+              </div>
+            </Card>
+          );
+        })}
       </section>
 
       <CategoryModal
