@@ -2,6 +2,7 @@ export {
   getCurrentGoogleUser,
   getGoogleAccessToken,
   hasActiveGoogleSession,
+  restoreGoogleSession,
   signInWithGoogle,
   signOutFromGoogle,
 } from "./googleAuthApi";

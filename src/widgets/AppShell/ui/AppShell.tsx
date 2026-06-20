@@ -23,6 +23,7 @@ export function AppShell({ children }: AppShellProps) {
     currentUser,
     spreadsheetId,
     spreadsheet,
+    isAuthReady,
     isLoading,
     errorMessage,
     signIn,
@@ -141,7 +142,7 @@ export function AppShell({ children }: AppShellProps) {
           </button>
         </div>
       </aside>
-      <main className={styles.content}>{children}</main>
+      <main className={styles.content}>{isAuthReady ? children : null}</main>
       <nav className={styles.mobileNavigation}>
         {navigationItems.map((item) => {
           const Icon = item.icon;

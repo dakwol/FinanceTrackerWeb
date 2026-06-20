@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   useSyncExternalStore,
@@ -21,6 +22,7 @@ import {
   GoogleApiError,
   hasActiveGoogleSession,
   readSheetRows,
+  restoreGoogleSession,
   signInWithGoogle,
   signOutFromGoogle,
   shareSpreadsheetWithEmail,
@@ -50,6 +52,7 @@ interface FinanceWorkspaceContextValue {
   plans: Plan[];
   operations: Operation[];
   transfers: Transfer[];
+  isAuthReady: boolean;
   isLoading: boolean;
   errorMessage: string | null;
   signIn: () => Promise<GoogleUser>;
@@ -93,8 +96,16 @@ export function FinanceWorkspaceProvider({
   const [plans, setPlans] = useState<Plan[]>([]);
   const [operations, setOperations] = useState<Operation[]>([]);
   const [transfers, setTransfers] = useState<Transfer[]>([]);
+  const [isAuthReady, setIsAuthReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    // The persisted Google session is an external browser store restored after hydration.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCurrentUser(restoreGoogleSession());
+    setIsAuthReady(true);
+  }, []);
 
   const runWithLoading = useCallback(
     async <Result,>(operation: () => Promise<Result>): Promise<Result> => {
@@ -460,6 +471,7 @@ export function FinanceWorkspaceProvider({
       plans,
       operations,
       transfers,
+      isAuthReady,
       isLoading,
       errorMessage,
       signIn,
@@ -487,6 +499,7 @@ export function FinanceWorkspaceProvider({
       plans,
       operations,
       transfers,
+      isAuthReady,
       isLoading,
       errorMessage,
       signIn,

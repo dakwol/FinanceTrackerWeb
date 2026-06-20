@@ -98,7 +98,7 @@ export function Dashboard({ month }: DashboardProps) {
     return (
       <StatusCard
         actionLabel="Войти через Google"
-        description="Access token не хранится между перезагрузками страницы. Войдите повторно, чтобы прочитать таблицу."
+        description="Сессия Google истекла или была завершена. Войдите повторно, чтобы прочитать таблицу."
         isLoading={isLoading}
         onAction={handleGoogleReconnect}
         title="Подтвердите доступ к Google"

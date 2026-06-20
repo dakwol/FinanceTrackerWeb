@@ -16,6 +16,15 @@ let accessToken: string | null = null;
 let tokenExpiresAt = 0;
 let scriptLoadingPromise: Promise<void> | null = null;
 
+const googleSessionStorageKey = "finance-tracker-google-session";
+const tokenExpirationSafetyWindowMs = 30_000;
+
+interface StoredGoogleSession {
+  accessToken: string;
+  expiresAt: number;
+  user: GoogleUser;
+}
+
 export async function signInWithGoogle(): Promise<GoogleUser> {
   validateGoogleConfiguration();
   await loadGoogleIdentityScript();
@@ -25,7 +34,10 @@ export async function signInWithGoogle(): Promise<GoogleUser> {
   accessToken = tokenResponse.access_token;
   tokenExpiresAt = Date.now() + tokenResponse.expires_in * 1000;
 
-  return getCurrentGoogleUser();
+  const user = await getCurrentGoogleUser();
+  persistGoogleSession(user);
+
+  return user;
 }
 
 export async function signOutFromGoogle(): Promise<void> {
@@ -91,7 +103,31 @@ export function getGoogleAccessToken(): string {
 }
 
 export function hasActiveGoogleSession(): boolean {
-  return Boolean(accessToken && Date.now() < tokenExpiresAt);
+  return Boolean(
+    accessToken &&
+      Date.now() + tokenExpirationSafetyWindowMs < tokenExpiresAt,
+  );
+}
+
+export function restoreGoogleSession(): GoogleUser | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const storedSession = readStoredGoogleSession();
+
+  if (
+    !storedSession ||
+    Date.now() + tokenExpirationSafetyWindowMs >= storedSession.expiresAt
+  ) {
+    clearGoogleSession();
+    return null;
+  }
+
+  accessToken = storedSession.accessToken;
+  tokenExpiresAt = storedSession.expiresAt;
+
+  return storedSession.user;
 }
 
 async function loadGoogleIdentityScript(): Promise<void> {
@@ -218,4 +254,65 @@ function validateGrantedScopes(tokenResponse: GoogleTokenResponse): void {
 function clearGoogleSession(): void {
   accessToken = null;
   tokenExpiresAt = 0;
+
+  if (typeof window !== "undefined") {
+    localStorage.removeItem(googleSessionStorageKey);
+  }
+}
+
+function persistGoogleSession(user: GoogleUser): void {
+  if (typeof window === "undefined" || !accessToken) {
+    return;
+  }
+
+  const session: StoredGoogleSession = {
+    accessToken,
+    expiresAt: tokenExpiresAt,
+    user,
+  };
+
+  localStorage.setItem(googleSessionStorageKey, JSON.stringify(session));
+}
+
+function readStoredGoogleSession(): StoredGoogleSession | null {
+  const serializedSession = localStorage.getItem(googleSessionStorageKey);
+
+  if (!serializedSession) {
+    return null;
+  }
+
+  try {
+    const session = JSON.parse(serializedSession) as Partial<StoredGoogleSession>;
+
+    if (
+      typeof session.accessToken !== "string" ||
+      typeof session.expiresAt !== "number" ||
+      !isGoogleUser(session.user)
+    ) {
+      return null;
+    }
+
+    return {
+      accessToken: session.accessToken,
+      expiresAt: session.expiresAt,
+      user: session.user,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function isGoogleUser(user: unknown): user is GoogleUser {
+  if (!user || typeof user !== "object") {
+    return false;
+  }
+
+  const candidate = user as Partial<GoogleUser>;
+
+  return (
+    typeof candidate.id === "string" &&
+    typeof candidate.name === "string" &&
+    typeof candidate.email === "string" &&
+    typeof candidate.pictureUrl === "string"
+  );
 }
