@@ -44,6 +44,10 @@
   justify-content: space-between;
   gap: 20px;
 
+  > div {
+    min-width: 0;
+  }
+
   p {
     margin: 0;
     color: var(--color-text-muted);
@@ -51,8 +55,11 @@
 }
 
 .monthHeading {
-  display: flex;
+  display: grid;
+  grid-template-columns: 36px minmax(0, auto) 36px;
   align-items: center;
+  width: fit-content;
+  max-width: 100%;
   gap: 7px;
   margin: 5px 0 6px;
 
@@ -76,14 +83,18 @@
 
   label {
     position: relative;
+    min-width: 0;
     cursor: pointer;
   }
 
   label > span {
     display: block;
+    overflow: hidden;
     font-size: clamp(30px, 5vw, 44px);
     font-weight: 700;
     letter-spacing: -0.05em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   input {
@@ -365,7 +376,7 @@
     align-items: stretch;
     flex-direction: column;
 
-    button {
+    > button {
       width: 100%;
     }
   }
@@ -375,11 +386,17 @@
   }
 
   .monthHeading {
-    justify-content: space-between;
+    grid-template-columns: 34px minmax(0, 1fr) 34px;
+    width: 100%;
 
     label > span {
-      font-size: clamp(26px, 9vw, 36px);
+      font-size: clamp(24px, 8vw, 34px);
       text-align: center;
+    }
+
+    > button {
+      width: 34px;
+      height: 34px;
     }
   }
 
