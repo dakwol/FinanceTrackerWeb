@@ -18,6 +18,7 @@ import type {
 } from "./model/types";
 
 const sheetsApiBaseUrl = "https://sheets.googleapis.com/v4/spreadsheets";
+const structureMigrationPromises = new Map<string, Promise<void>>();
 
 export interface InitializeFinanceSpreadsheetParams {
   spreadsheetId: string;
@@ -96,6 +97,72 @@ export async function initializeFinanceSpreadsheet(
   );
 }
 
+export async function ensureFinanceSpreadsheetStructure(
+  spreadsheetId: string,
+): Promise<void> {
+  const activeMigration = structureMigrationPromises.get(spreadsheetId);
+
+  if (activeMigration) {
+    return activeMigration;
+  }
+
+  const migration = migrateFinanceSpreadsheetStructure(spreadsheetId).finally(
+    () => {
+      structureMigrationPromises.delete(spreadsheetId);
+    },
+  );
+  structureMigrationPromises.set(spreadsheetId, migration);
+
+  return migration;
+}
+
+async function migrateFinanceSpreadsheetStructure(
+  spreadsheetId: string,
+): Promise<void> {
+  const spreadsheet = await getSpreadsheetMetadata(spreadsheetId);
+  const existingSheetNames = new Set(
+    spreadsheet.sheets?.map((sheet) => sheet.properties.title) ?? [],
+  );
+  const missingSheetNames = Object.values(SheetNameEnum).filter(
+    (sheetName) => !existingSheetNames.has(sheetName),
+  );
+
+  if (missingSheetNames.length === 0) {
+    return;
+  }
+
+  await googleApiRequest(
+    `${sheetsApiBaseUrl}/${spreadsheetId}:batchUpdate`,
+    getGoogleAccessToken(),
+    {
+      method: "POST",
+      body: JSON.stringify({
+        requests: missingSheetNames.map((sheetName) => ({
+          addSheet: {
+            properties: { title: sheetName },
+          },
+        })),
+      }),
+    },
+  );
+
+  await googleApiRequest(
+    `${sheetsApiBaseUrl}/${spreadsheetId}/values:batchUpdate`,
+    getGoogleAccessToken(),
+    {
+      method: "POST",
+      body: JSON.stringify({
+        valueInputOption: "RAW",
+        data: missingSheetNames.map((sheetName) => ({
+          range: `${sheetName}!A1`,
+          majorDimension: "ROWS",
+          values: [financeSheetHeaders[sheetName]],
+        })),
+      }),
+    },
+  );
+}
+
 export async function readSheetRows(
   spreadsheetId: string,
   sheetName: SheetNameEnum,
@@ -162,6 +229,7 @@ export async function updateSheetRow(
 export async function validateSpreadsheetAccess(
   spreadsheetId: string,
 ): Promise<GoogleSpreadsheet> {
+  await ensureFinanceSpreadsheetStructure(spreadsheetId);
   const spreadsheet = await getSpreadsheetMetadata(spreadsheetId);
   const actualSheetNames = new Set(
     spreadsheet.sheets?.map((sheet) => sheet.properties.title) ?? [],

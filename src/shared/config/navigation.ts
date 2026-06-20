@@ -2,6 +2,7 @@ import {
   ChartNoAxesCombined,
   FolderKanban,
   ListChecks,
+  MessageCircle,
   Settings,
   WalletCards,
 } from "lucide-react";
@@ -28,9 +29,13 @@ export const navigationItems = [
     icon: FolderKanban,
   },
   {
+    label: "Чат",
+    href: "/chat",
+    icon: MessageCircle,
+  },
+  {
     label: "Настройки",
     href: "/settings",
     icon: Settings,
   },
 ];
-

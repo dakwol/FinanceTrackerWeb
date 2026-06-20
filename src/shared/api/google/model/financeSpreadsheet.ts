@@ -61,6 +61,21 @@ export const financeSheetHeaders: Record<SheetNameEnum, string[]> = {
     "freeBalance",
     "updatedAt",
   ],
+  [SheetNameEnum.Messages]: [
+    "id",
+    "senderEmail",
+    "senderName",
+    "text",
+    "createdAt",
+  ],
+  [SheetNameEnum.PushSubscriptions]: [
+    "endpoint",
+    "p256dh",
+    "auth",
+    "userEmail",
+    "createdAt",
+    "updatedAt",
+  ],
 };
 
 export function createInitialSpreadsheetRows(
@@ -91,6 +106,10 @@ export function createInitialSpreadsheetRows(
     ],
     [SheetNameEnum.Transfers]: [financeSheetHeaders[SheetNameEnum.Transfers]],
     [SheetNameEnum.Summary]: [financeSheetHeaders[SheetNameEnum.Summary]],
+    [SheetNameEnum.Messages]: [financeSheetHeaders[SheetNameEnum.Messages]],
+    [SheetNameEnum.PushSubscriptions]: [
+      financeSheetHeaders[SheetNameEnum.PushSubscriptions],
+    ],
   };
 }
 

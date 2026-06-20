@@ -13,6 +13,7 @@ export {
 export {
   appendSheetRow,
   createFinanceSpreadsheet,
+  ensureFinanceSpreadsheetStructure,
   getSpreadsheetMetadata,
   initializeFinanceSpreadsheet,
   parseSpreadsheetIdFromUrl,

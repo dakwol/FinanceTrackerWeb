@@ -18,6 +18,7 @@ import type { Transfer } from "@/entities/transfer/model/types";
 import type { WorkspaceUser } from "@/entities/user/model/types";
 import {
   appendSheetRow,
+  ensureFinanceSpreadsheetStructure,
   getSpreadsheetMetadata,
   GoogleApiError,
   hasActiveGoogleSession,
@@ -409,6 +410,8 @@ export function FinanceWorkspaceProvider({
             "Для загрузки данных войдите в Google повторно.",
           );
         }
+
+        await ensureFinanceSpreadsheetStructure(spreadsheetId);
 
         const [
           spreadsheetMetadata,

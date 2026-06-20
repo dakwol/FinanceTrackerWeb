@@ -157,9 +157,13 @@
 
 @media (max-width: 620px) {
   .toolbar {
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 8px;
+    padding: 12px;
 
     > button:last-child {
+      grid-column: 1 / -1;
       width: 100%;
       margin-left: 0;
     }
@@ -167,11 +171,118 @@
 
   .month {
     min-width: 0;
-    flex: 1;
+    gap: 6px;
+    font-size: 14px;
   }
 
   .summary {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+
+    section {
+      min-width: 0;
+      gap: 5px;
+      padding: 12px 10px;
+    }
+
+    span {
+      font-size: 11px;
+    }
+
+    strong {
+      overflow: hidden;
+      font-size: clamp(15px, 4.3vw, 19px);
+      letter-spacing: -0.04em;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  .planCard {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+  }
+
+  .list {
+    gap: 10px;
+  }
+
+  .row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 8px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    background: var(--color-surface);
+    padding: 14px;
+    box-shadow: var(--shadow-card);
+
+    &:first-child {
+      border-top: 1px solid var(--color-border);
+    }
+  }
+
+  .categoryMark {
+    width: 7px;
+    height: 42px;
+    grid-row: 1 / 3;
+  }
+
+  .category {
+    min-width: 0;
+
+    strong,
+    span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    strong {
+      white-space: nowrap;
+    }
+  }
+
+  .values {
+    grid-column: 3;
+    grid-row: 1 / 3;
+    align-self: center;
+    justify-items: end;
+
+    strong {
+      font-size: 14px;
+    }
+
+    span {
+      font-size: 10px;
+      white-space: nowrap;
+    }
+  }
+
+  .progress {
+    height: 7px;
+    grid-column: 2 / -1;
+  }
+
+  .row > button {
+    width: 100%;
+    grid-column: 2 / -1;
+    grid-row: auto;
+    justify-content: center;
+    margin-top: 2px;
   }
 }
 
+@media (max-width: 390px) {
+  .summary {
+    strong {
+      font-size: 14px;
+    }
+  }
+
+  .values {
+    strong {
+      font-size: 13px;
+    }
+  }
+}
